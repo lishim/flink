@@ -82,6 +82,12 @@ public class MesosTaskManagerParameters {
 		key("mesos.resourcemanager.tasks.bootstrap-cmd")
 		.noDefaultValue();
 
+	public static final ConfigOption<String> MESOS_TM_URIS =
+		key("mesos.resourcemanager.tasks.uris")
+		.noDefaultValue()
+		.withDescription("A comma separated list of URIs of custom artifacts to be downloaded into the sandbox" +
+			" of Mesos workers.");
+
 	public static final ConfigOption<String> MESOS_RM_CONTAINER_VOLUMES =
 		key("mesos.resourcemanager.tasks.container.volumes")
 		.noDefaultValue();
@@ -123,6 +129,8 @@ public class MesosTaskManagerParameters {
 
 	private final Option<String> taskManagerHostname;
 
+	private final List<String> uris;
+
 	public MesosTaskManagerParameters(
 			double cpus,
 			ContainerType containerType,
@@ -133,7 +141,8 @@ public class MesosTaskManagerParameters {
 			List<ConstraintEvaluator> constraints,
 			String command,
 			Option<String> bootstrapCommand,
-			Option<String> taskManagerHostname) {
+			Option<String> taskManagerHostname,
+			List<String> uris) {
 
 		this.cpus = cpus;
 		this.containerType = Preconditions.checkNotNull(containerType);
@@ -145,6 +154,7 @@ public class MesosTaskManagerParameters {
 		this.command = Preconditions.checkNotNull(command);
 		this.bootstrapCommand = Preconditions.checkNotNull(bootstrapCommand);
 		this.taskManagerHostname = Preconditions.checkNotNull(taskManagerHostname);
+		this.uris = Preconditions.checkNotNull(uris);
 	}
 
 	/**
@@ -219,6 +229,13 @@ public class MesosTaskManagerParameters {
 		return bootstrapCommand;
 	}
 
+	/**
+	 * Get custom artifact URIs.
+	 */
+	public List<String> uris() {
+		return uris;
+	}
+
 	@Override
 	public String toString() {
 		return "MesosTaskManagerParameters{" +
@@ -232,6 +249,7 @@ public class MesosTaskManagerParameters {
 			", taskManagerHostName=" + taskManagerHostname +
 			", command=" + command +
 			", bootstrapCommand=" + bootstrapCommand +
+			", uris=" + uris +
 			'}';
 	}
 
@@ -278,9 +296,13 @@ public class MesosTaskManagerParameters {
 
 		Option<String> dockerParamsOpt = Option.<String>apply(flinkConfig.getString(MESOS_RM_CONTAINER_DOCKER_PARAMETERS));
 
+		Option<String> uriParamsOpt = Option.<String>apply(flinkConfig.getString(MESOS_TM_URIS));
+
 		List<Protos.Volume> containerVolumes = buildVolumes(containerVolOpt);
 
 		List<Protos.Parameter> dockerParameters = buildDockerParameters(dockerParamsOpt);
+
+		List<String> uris = buildUris(uriParamsOpt);
 
 		//obtain Task Manager Host Name from the configuration
 		Option<String> taskManagerHostname = Option.apply(flinkConfig.getString(MESOS_TM_HOSTNAME));
@@ -299,7 +321,8 @@ public class MesosTaskManagerParameters {
 			constraints,
 			tmCommand,
 			tmBootstrapCommand,
-			taskManagerHostname);
+			taskManagerHostname,
+			uris);
 	}
 
 	private static List<ConstraintEvaluator> parseConstraints(String mesosConstraints) {
@@ -409,6 +432,22 @@ public class MesosTaskManagerParameters {
 				}
 			}
 			return parameters;
+		}
+	}
+
+	/**
+	 * Build a list of URIs for providing custom artifacts to Mesos tasks.
+	 * @param uris a comma delimited optional string listing artifact URIs
+	 */
+	public static List<String> buildUris(Option<String> uris) {
+		if (uris.isEmpty()) {
+			return Collections.emptyList();
+		} else {
+			List<String> urisList = new ArrayList<>();
+			for (String uri : uris.get().split(",")) {
+				urisList.add(uri.trim());
+			}
+			return urisList;
 		}
 	}
 
