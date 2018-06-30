@@ -311,7 +311,8 @@ public class LaunchableMesosWorker implements LaunchableTask {
 					.setDocker(Protos.ContainerInfo.DockerInfo.newBuilder()
 						.addAllParameters(params.dockerParameters())
 						.setNetwork(Protos.ContainerInfo.DockerInfo.Network.HOST)
-						.setImage(params.containerImageName().get()));
+						.setImage(params.containerImageName().get())
+						.setForcePullImage(params.dockerForcePullImage()));
 				break;
 
 			default:

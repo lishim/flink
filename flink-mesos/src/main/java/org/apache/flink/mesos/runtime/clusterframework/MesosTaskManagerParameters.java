@@ -101,6 +101,12 @@ public class MesosTaskManagerParameters {
 		.withDescription("Custom parameters to be passed into docker run command when using the docker containerizer." +
 			" Comma separated list of \"key=value\" pairs. The \"value\" may contain '='.");
 
+	public static final ConfigOption<Boolean> MESOS_RM_CONTAINER_DOCKER_FORCE_PULL_IMAGE =
+		key("mesos.resourcemanager.tasks.container.docker.forcePullImage")
+		.defaultValue(false)
+		.withDescription("Instruct the docker containerizer to forcefully pull the image rather than" +
+			" reuse a cached version.");
+
 	public static final ConfigOption<String> MESOS_CONSTRAINTS_HARD_HOSTATTR =
 		key("mesos.constraints.hard.hostattribute")
 		.noDefaultValue()
@@ -129,6 +135,8 @@ public class MesosTaskManagerParameters {
 
 	private final List<Protos.Parameter> dockerParameters;
 
+	private final boolean dockerForcePullImage;
+
 	private final List<ConstraintEvaluator> constraints;
 
 	private final String command;
@@ -145,6 +153,7 @@ public class MesosTaskManagerParameters {
 			ContaineredTaskManagerParameters containeredParameters,
 			List<Protos.Volume> containerVolumes,
 			List<Protos.Parameter> dockerParameters,
+			boolean dockerForcePullImage,
 			List<ConstraintEvaluator> constraints,
 			String command,
 			Option<String> bootstrapCommand,
@@ -157,6 +166,7 @@ public class MesosTaskManagerParameters {
 		this.containeredParameters = Preconditions.checkNotNull(containeredParameters);
 		this.containerVolumes = Preconditions.checkNotNull(containerVolumes);
 		this.dockerParameters = Preconditions.checkNotNull(dockerParameters);
+		this.dockerForcePullImage = dockerForcePullImage;
 		this.constraints = Preconditions.checkNotNull(constraints);
 		this.command = Preconditions.checkNotNull(command);
 		this.bootstrapCommand = Preconditions.checkNotNull(bootstrapCommand);
@@ -215,6 +225,13 @@ public class MesosTaskManagerParameters {
 	}
 
 	/**
+	 * Get Docker option to force pull image.
+	 */
+	public boolean dockerForcePullImage() {
+		return dockerForcePullImage;
+	}
+
+	/**
 	 * Get the placement constraints.
 	 */
 	public List<ConstraintEvaluator> constraints() {
@@ -252,6 +269,7 @@ public class MesosTaskManagerParameters {
 			", containeredParameters=" + containeredParameters +
 			", containerVolumes=" + containerVolumes +
 			", dockerParameters=" + dockerParameters +
+			", dockerForcePullImage=" + dockerForcePullImage +
 			", constraints=" + constraints +
 			", taskManagerHostName=" + taskManagerHostname +
 			", command=" + command +
@@ -309,6 +327,8 @@ public class MesosTaskManagerParameters {
 
 		Option<String> dockerParamsOpt = Option.<String>apply(flinkConfig.getString(MESOS_RM_CONTAINER_DOCKER_PARAMETERS));
 
+		boolean dockerForcePullImage = flinkConfig.getBoolean(MESOS_RM_CONTAINER_DOCKER_FORCE_PULL_IMAGE);
+
 		List<Protos.Volume> containerVolumes = buildVolumes(containerVolOpt);
 
 		List<Protos.Parameter> dockerParameters = buildDockerParameters(dockerParamsOpt);
@@ -328,6 +348,7 @@ public class MesosTaskManagerParameters {
 			containeredParameters,
 			containerVolumes,
 			dockerParameters,
+			dockerForcePullImage,
 			constraints,
 			tmCommand,
 			tmBootstrapCommand,

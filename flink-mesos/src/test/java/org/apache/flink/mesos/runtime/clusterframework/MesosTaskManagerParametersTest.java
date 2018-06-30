@@ -122,6 +122,32 @@ public class MesosTaskManagerParametersTest extends TestLogger {
 	}
 
 	@Test
+	public void testForcePullImageTrue() {
+		Configuration config = new Configuration();
+		config.setBoolean(MesosTaskManagerParameters.MESOS_RM_CONTAINER_DOCKER_FORCE_PULL_IMAGE, true);
+
+		MesosTaskManagerParameters params = MesosTaskManagerParameters.create(config);
+		assertEquals(params.dockerForcePullImage(), true);
+	}
+
+	@Test
+	public void testForcePullImageFalse() {
+		Configuration config = new Configuration();
+		config.setBoolean(MesosTaskManagerParameters.MESOS_RM_CONTAINER_DOCKER_FORCE_PULL_IMAGE, false);
+
+		MesosTaskManagerParameters params = MesosTaskManagerParameters.create(config);
+		assertEquals(params.dockerForcePullImage(), false);
+	}
+
+	@Test
+	public void testForcePullImageDefault() {
+		Configuration config = new Configuration();
+
+		MesosTaskManagerParameters params = MesosTaskManagerParameters.create(config);
+		assertEquals(params.dockerForcePullImage(), false);
+	}
+
+	@Test
 	public void givenTwoConstraintsInConfigShouldBeParsed() throws Exception {
 
 		MesosTaskManagerParameters mesosTaskManagerParameters = MesosTaskManagerParameters.create(withHardHostAttrConstraintConfiguration("cluster:foo,az:eu-west-1"));
